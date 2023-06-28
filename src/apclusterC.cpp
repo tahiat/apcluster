@@ -2,6 +2,8 @@
 #include <float.h>
 #include <Rcpp.h>
 
+#include <fstream>
+
 #include "apclusterCppHeaders.h"
 
 using namespace Rcpp;
@@ -34,20 +36,28 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
         exprefAll = NumericVector(maxits);
         idxAll    = NumericMatrix(N, maxits);
     }
-
+	// ------------- LOG ------------------- //
+	std::string filename("D:\NJIT\Research-DrNeamtiu\R-determinism\labels.csv");	
+	//std::string filename("/Volumes/GoogleDrive-106814186171519265385/My\ Drive/Research/ClusteringProject/R/AP/labels.csv");
+	std::ofstream file_out;
+	file_out.open(filename, std::ios_base::app);
+	// ------------- LOG ------------------- //
+	
     bool dn = false, unconverged = false;
 
     int i = 0, j, ii, K;
 
     while (!dn)
     {
+	// ------------- LOG ------------------- //
+	    file_out << i << ",";
+	// ------------- LOG ------------------- //
         // first, compute responsibilities
         
         for (ii = 0; ii < N; ii++)
         {
             double max1 = -DBL_MAX, max2 = -DBL_MAX, avsim;
             int yMax;
-            
             for (j = 0; j < N; j++) // determine second-largest element of AS
             {
 		avsim = A(ii, j) + s(ii, j);
@@ -144,7 +154,7 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                     cluster++;
                 }
             }
-            
+            //std::cout << "Iter: " << i << std::endl;
             for (ii = 0; ii < N; ii++)
             {
                 if (E[ii])
@@ -163,9 +173,15 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                         }
                     }
                 }
+	// ------------- LOG ------------------- //
+		    file_out << tmpidx[ii] << ",";
+	// ------------- LOG ------------------- //	
+		    
             }
-            
-            if (details)
+	// ------------- LOG ------------------- //
+            file_out << std::endl;
+ 	// ------------- LOG ------------------- //       
+	    if (details)
             {
                 double sumPref = 0;
                 
@@ -193,18 +209,25 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
     }
 
     List ret;
-
+	
     ret["I"]      = I;
     ret["K"]      = K;
     ret["it"]     = IntegerVector::create(i - 1);
     ret["unconv"] = LogicalVector::create(unconverged);
 
+	
+	//std::cout << "apclusterC.cpp unconv" << LogicalVector::create(unconverged) << std::endl;
+
+	//std::cout << "apclusterC K: " << K << std::endl;
+	
     if (details)
     {
         ret["netsimAll"]  = netsimAll;
         ret["dpsimAll"]   = dpsimAll;
         ret["exprefAll"]  = exprefAll;
         ret["idxAll"]     = idxAll;
+	//std::cout << "apclusterC.cpp : " << sizeof( idxAll ) << std::endl; 
+	//std::cout << "apclusterC.cpp Huehue2 : " << sizeof( idxAll[0] ) << std::endl; 
     }
 
     return(ret);
