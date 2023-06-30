@@ -173,6 +173,8 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                         }
                     }
                 }
+
+            Rprintf("Iteration=%d, clusters=%d \n",i, cluster);
 	// ------------- LOG ------------------- //
 		    file_out << tmpidx[ii] << ",";
 	// ------------- LOG ------------------- //	
