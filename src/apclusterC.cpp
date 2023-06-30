@@ -37,10 +37,10 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
         idxAll    = NumericMatrix(N, maxits);
     }
 	// ------------- LOG ------------------- //
-	std::string filename("D:\NJIT\Research-DrNeamtiu\R-determinism\labels.csv");	
+	std::string filename("D:\\NJIT\\Research-DrNeamtiu\\R-determinism\\labels.csv");	
 	//std::string filename("/Volumes/GoogleDrive-106814186171519265385/My\ Drive/Research/ClusteringProject/R/AP/labels.csv");
 	std::ofstream file_out;
-	file_out.open(filename, std::ios_base::app);
+	file_out.open(filename, std::ofstream::out);
 	// ------------- LOG ------------------- //
 	
     bool dn = false, unconverged = false;
