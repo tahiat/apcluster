@@ -1,6 +1,6 @@
 apcluster.matrix <- function(s, x, p=NA, q=NA, maxits=1000, convits=100,
                              lam=0.9, includeSim=FALSE, details=FALSE,
-                             nonoise=FALSE, seed=NA)
+                             nonoise=FALSE, seed=NA, run=0, dataset=0)
 {
     if (!is.na(seed)) set.seed(seed)
 
@@ -93,7 +93,7 @@ apcluster.matrix <- function(s, x, p=NA, q=NA, maxits=1000, convits=100,
              " but smaller than ", .Machine$double.xmax)
 
     res <- .Call("apclusterC", s, as.integer(maxits),
-                 as.integer(convits), as.double(lam), as.logical(details),
+                 as.integer(convits), as.double(lam), as.logical(details), as.integer(run), as.integer(dataset),
                  PACKAGE="apcluster")
 
     K <- res$K

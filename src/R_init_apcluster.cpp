@@ -13,7 +13,7 @@ extern "C"
 
 static const R_CallMethodDef callMethods[] = {
     {"aggExClusterC", (DL_FUNC) &aggExClusterC, 13},
-    {"apclusterC", (DL_FUNC) &apclusterC, 5},
+    {"apclusterC", (DL_FUNC) &apclusterC, 7},
     {"apclusterLeveragedC", (DL_FUNC) &apclusterLeveragedC, 5},
     {"apclusterSparseC", (DL_FUNC) &apclusterSparseC, 8},
     {"preferenceRangeC", (DL_FUNC) &preferenceRangeC, 2},

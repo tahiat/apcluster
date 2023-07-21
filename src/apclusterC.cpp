@@ -9,7 +9,7 @@
 using namespace Rcpp;
 
 RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
-                           SEXP lamR, SEXP detailsR)
+                           SEXP lamR, SEXP detailsR, SEXP runN, SEXP dataset)
 {
     NumericMatrix s(sR);
     int maxits = as<int>(maxitsR);
@@ -29,6 +29,16 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
     NumericVector exprefAll;
     NumericMatrix idxAll;
 
+    //custom variable start 
+    NumericMatrix aa(N, N);
+    NumericMatrix ee(N, N);
+
+    int run = as<int>(runN);
+    int n_dataset = as<int>(dataset);
+    std::string datasets[5] = { "parity5", "Titanic", "dbworld-subjects", "shuttle-landing-control", "analcatdata_vehicle" };
+    //custom variable end
+
+
     if (details)
     {
         netsimAll = NumericVector(maxits);
@@ -37,21 +47,26 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
         idxAll    = NumericMatrix(N, maxits);
     }
 	// ------------- LOG ------------------- //
-	std::string filename("D:\\NJIT\\Research-DrNeamtiu\\R-determinism\\labels.csv");	
-	//std::string filename("/Volumes/GoogleDrive-106814186171519265385/My\ Drive/Research/ClusteringProject/R/AP/labels.csv");
+	std::string filename("D:\\NJIT\\RESEARCH\\R-determinism\\Datasets_analysis\\"+datasets[n_dataset]+"\\run"+std::to_string(run)+"\\labels.csv");	// one file will contain all iteration data
 	std::ofstream file_out;
 	file_out.open(filename, std::ofstream::out);
 	// ------------- LOG ------------------- //
-	
+
+    std::string eFileName = "D:\\NJIT\\RESEARCH\\R-determinism\\Datasets_analysis\\"+datasets[n_dataset]+"\\run"+std::to_string(run)+"\\E.csv"; // one file will contain all iteration data
+    std::ofstream e_writer;
+    e_writer.open(eFileName, std::ofstream::out);
+
     bool dn = false, unconverged = false;
 
     int i = 0, j, ii, K;
-
+    int r_variation, a_variation, e_variation;
     while (!dn)
     {
-	// ------------- LOG ------------------- //
-	    file_out << i << ",";
-	// ------------- LOG ------------------- //
+
+
+	    // ------------- LOG ------------------- //
+	     //file_out << i << ",";
+	    // ------------- LOG ------------------- //
         // first, compute responsibilities
         
         for (ii = 0; ii < N; ii++)
@@ -60,7 +75,7 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
             int yMax;
             for (j = 0; j < N; j++) // determine second-largest element of AS
             {
-		avsim = A(ii, j) + s(ii, j);
+		        avsim = A(ii, j) + s(ii, j);
 
                 if (avsim > max1)
                 {
@@ -80,7 +95,17 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                 R(ii, j) = (newVal > DBL_MAX ? DBL_MAX : newVal);
             }
         }
+
         
+        std::string rFileName = "D:\\NJIT\\RESEARCH\\R-determinism\\Datasets_analysis\\"+ datasets[n_dataset]  +"\\run"+std::to_string(run)+"\\R_" + std::to_string(i) + ".csv";
+        std::ofstream r_writer;
+        r_writer.open(rFileName, std::ofstream::out);
+        r_writer << "RData" << std::endl;  // data are stored in a vector
+        for(int t=0;t<N*N;t++){
+            r_writer << R[t] << std::endl;   
+        }
+        r_writer.close();
+
         // secondly, compute availabilities
         
         for (ii = 0; ii < N; ii++)
@@ -97,7 +122,6 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                 
                 auxsum += Rp[j];
             }
-            
             for (j = 0; j < N; j++)
             {
                 double oldVal = A(j, ii);
@@ -109,6 +133,15 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                 A(j, ii) = (1 - lam) * newVal + lam * oldVal;
             }
         }
+        
+        std::string aFileName = "D:\\NJIT\\RESEARCH\\R-determinism\\Datasets_analysis\\"+datasets[n_dataset]+"\\run"+std::to_string(run)+"\\A_" + std::to_string(i) + ".csv";
+        std::ofstream a_writer;  // vector data
+        a_writer.open(aFileName, std::ofstream::out);
+        a_writer << "AData" << std::endl;
+        for(int t=0;t<N*N;t++){
+            a_writer << A[t] << std::endl;
+        }
+        a_writer.close();
         
         // determine clusters and check for convergence
         
@@ -124,9 +157,15 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                 unconverged = true;
             E[ii] = ex;
             e(ii, i % convits) = ex;
-            K += ex;
+            K += ex;    // ex>0 is potential exemplars. same valued ex are one cluster. 
         }
         
+        e_writer << "Iteration " << i ;
+        for(int t=0;t<N;t++){
+            e_writer << "," << E[t];
+        }
+        e_writer << std::endl;
+
         if (i >= (convits - 1) || i >= (maxits - 1))
             dn = ((!unconverged && K > 0) || (i >= (maxits - 1)));
         
@@ -174,16 +213,15 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                     }
                 }
 
-            Rprintf("Iteration=%d, clusters=%d \n",i, cluster);
-	// ------------- LOG ------------------- //
-		    file_out << tmpidx[ii] << ",";
-	// ------------- LOG ------------------- //	
+	            // ------------- LOG ------------------- //
+		         // file_out << tmpidx[ii] << ",";
+	            // ------------- LOG ------------------- //	
 		    
             }
-	// ------------- LOG ------------------- //
-            file_out << std::endl;
- 	// ------------- LOG ------------------- //       
-	    if (details)
+	        // ------------- LOG ------------------- //
+            // file_out << std::endl;
+ 	        // ------------- LOG ------------------- //       
+	        if (details)
             {
                 double sumPref = 0;
                 
@@ -206,12 +244,18 @@ RcppExport SEXP apclusterC(SEXP sR, SEXP maxitsR, SEXP convitsR,
                 idxLocal = tmpidx;
             }
         }
-        
+        // dumping cluster assingment of each sampledata to its exemplars.
+
+        file_out << "Iteration " << i;    
+        for (int p=0;p<N;p++){
+            file_out <<  "," << tmpidx[p];
+        }
+        file_out << std::endl;
         i++;
     }
-
+    file_out.close();
+    e_writer.close();
     List ret;
-	
     ret["I"]      = I;
     ret["K"]      = K;
     ret["it"]     = IntegerVector::create(i - 1);
